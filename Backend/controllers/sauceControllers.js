@@ -25,9 +25,7 @@ exports.create = (req, res, next) => {
 
 //Modification d'une sauce
 exports.update = (req, res, next) => {
-  if(sauce.userId != req.auth.userId){
-    res.status(401).json({message:"Utilisateur non autorisé !"})
-  } else{
+ 
     const sauceObject = req.file ?
       {
         ...JSON.parse(req.body.sauce),
@@ -36,12 +34,16 @@ exports.update = (req, res, next) => {
     if (req.file) {
       Sauce.findOne({ _id: req.params.id })
         .then((sauce) => {
-          const filename = sauce.imageUrl.split('/images/')[1];
-          fs.unlink(`images/${filename}`, () => {
-            Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
-              .then(() => { res.status(200).json({ message: 'Sauce mise à jour!' }); })
-              .catch((error) => { res.status(400).json({ error }); });
-          })
+          if(sauce.userId != req.auth.userId){
+            res.status(401).json({message:"Utilisateur non autorisé !"})
+          } else{
+            const filename = sauce.imageUrl.split('/images/')[1];
+            fs.unlink(`images/${filename}`, () => {
+              Sauce.updateOne({ _id: req.params.id }, { ...sauceObject, _id: req.params.id })
+                .then(() => { res.status(200).json({ message: 'Sauce mise à jour!' }); })
+                .catch((error) => { res.status(400).json({ error }); });
+            })
+          }
         })
         .catch((error) => { res.status(500).json({ error }); });
 
@@ -50,7 +52,6 @@ exports.update = (req, res, next) => {
         .then(() => res.status(200).json({ message: 'Sauce mise à jour!' }))
         .catch((error) => res.status(400).json({ error }));
     }
-  }
 };
 
 //Récupération de toutes les sauces
